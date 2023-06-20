@@ -1,0 +1,20 @@
+{
+  "GEXFactory": {
+    "address": "0x85e36756E03f6bE7d0549F0484d43E2c92dE8c69",
+    "vars": {
+      "INIT_CODE_PAIR_HASH": "0x9b7a234513ebe38e9cf4936e1ce93720699a9e264ca502e2299f6c9f0a028d45",
+      "feeTo": "0x3DBC4548b4194Ae95Ef212BB650f3790F54481C1",
+      "feeToSetter": "0x3DBC4548b4194Ae95Ef212BB650f3790F54481C1"
+    }
+  },
+  "GEXRouter01": {
+    "address": "0xe2b46b6e483d1Dd422E108fE7eE5D80D5d61EA34",
+    "vars": {
+      "factory": "0x85e36756E03f6bE7d0549F0484d43E2c92dE8c69",
+      "WGLCH": "0xA1e499e7386308d8C12Cc406b9C62866Cc8998Be"
+    }
+  },
+  "Multicall": {
+    "address": "0xA3e16EDE9d0D54400D58e3cF6266D67059F55Cb5"
+  }
+}

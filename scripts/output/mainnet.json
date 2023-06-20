@@ -1,0 +1,20 @@
+{
+  "GEXFactory": {
+    "address": "",
+    "vars": {
+      "INIT_CODE_PAIR_HASH": "",
+      "feeTo": "",
+      "feeToSetter": ""
+    }
+  },
+  "GEXRouter01": {
+    "address": "",
+    "vars": {
+      "factory": "",
+      "WGLCH": ""
+    }
+  },
+  "Multicall": {
+    "address": ""
+  }
+}
