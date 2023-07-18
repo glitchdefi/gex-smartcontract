@@ -117,7 +117,7 @@ contract GEXPair is IGEXPair, GEXERC20 {
         emit Sync(reserve0, reserve1);
     }
 
-    // if fee is on, mint liquidity equivalent to 4/11th of the growth in sqrt(k)
+    // if fee is on, mint liquidity equivalent to 2/7th of the growth in sqrt(k)
     function _mintFee(
         uint112 _reserve0,
         uint112 _reserve1
@@ -131,9 +131,9 @@ contract GEXPair is IGEXPair, GEXERC20 {
                 uint rootKLast = Math.sqrt(_kLast);
                 if (rootK > rootKLast) {
                     uint numerator = totalSupply.mul(rootK.sub(rootKLast)).mul(
-                        4
+                        2
                     );
-                    uint denominator = rootK.mul(11).add(rootKLast.mul(4));
+                    uint denominator = rootK.mul(5).add(rootKLast.mul(2));
                     uint liquidity = numerator / denominator;
                     if (liquidity > 0) _mint(feeTo, liquidity);
                 }

@@ -1,5 +1,10 @@
 # Glitch Decentralized Exchange - GEX
-This repo includes core and peripheral contracts of the GEX
+This repo includes core and peripheral contracts of the GEX.
+
+## Note
+Please make sure that `FEE_TO` and `FEE_TO_SETTER` is an Externally Owned Account or a Multisig Account that support receiving the native token and be able to call abitrary smart contract methods: 
+- The `FEE_TO_SETTER` is used to change the `FEE_TO` address.
+- The `FEE_TO` is the address that receives the protocol fee and also be used to collect dust native token (if any). (Due to the minimum transferring constant of the blockchain protocol, dust native token is locked in the router contract instead of sending back to the liquidity prodiver)
 
 ## Requirements
 + node >= v14.

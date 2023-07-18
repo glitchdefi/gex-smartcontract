@@ -136,8 +136,8 @@ contract GEXRouter is IGEXRouter02 {
         IWGLCH(WGLCH).deposit{value: amountETH}();
         assert(IWGLCH(WGLCH).transfer(pair, amountETH));
         liquidity = IGEXPair(pair).mint(to);
-        // refund dust eth, if any
-        if (msg.value > amountETH)
+        // refund dust eth, if any > 0.01 GLCH
+        if (msg.value.sub(amountETH) > 10000000000000000)
             TransferHelper.safeTransferETH(msg.sender, msg.value - amountETH);
     }
 
@@ -511,8 +511,8 @@ contract GEXRouter is IGEXRouter02 {
             )
         );
         _swap(amounts, path, to);
-        // refund dust eth, if any
-        if (msg.value > amounts[0])
+        // refund dust eth, if any > 0.01 GLCH
+        if (msg.value.sub(amounts[0]) > 10000000000000000)
             TransferHelper.safeTransferETH(msg.sender, msg.value - amounts[0]);
     }
 

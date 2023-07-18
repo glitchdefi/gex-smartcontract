@@ -8,32 +8,20 @@ import "../interfaces/IGEXRouter01.sol";
 import "../interfaces/IERC20.sol";
 import "../interfaces/IWGLCH.sol";
 
-contract GEXRouter01 is IGEXRouter01 {
+contract GEXRouter02 is IGEXRouter01 {
     using SafeMath for uint;
 
     address public immutable override factory;
     address public immutable override WGLCH;
-    uint public minGLCHAmount;
 
     modifier ensure(uint deadline) {
         require(deadline >= block.timestamp, "GEXRouter: EXPIRED");
         _;
     }
 
-    constructor(address _factory, address _WGLCH, uint _minGLCHAmount) public {
+    constructor(address _factory, address _WGLCH) public {
         factory = _factory;
         WGLCH = _WGLCH;
-        minGLCHAmount = _minGLCHAmount;
-    }
-
-    function withdraw() external {
-        address feeTo = IGEXFactory(factory).feeTo();
-        require(msg.sender == feeTo, "GEXRouter: FORBIDDEN");
-
-        uint balance = address(this).balance;
-        require(balance >= minGLCHAmount, "GEXRouter: MIN_GLCH_AMOUNT");
-
-        TransferHelper.safeTransferETH(feeTo, balance);
     }
 
     receive() external payable {
@@ -86,6 +74,69 @@ contract GEXRouter01 is IGEXRouter01 {
                 (amountA, amountB) = (amountAOptimal, amountBDesired);
             }
         }
+    }
+    function _addLiquidity2(
+        address tokenA,
+        address tokenB,
+        uint amountADesired,
+        uint amountBDesired,
+        uint amountAMin,
+        uint amountBMin
+    ) public view returns (uint amountA, uint amountB) {
+        // create the pair if it doesn't exist yet
+        // if (IGEXFactory(factory).getPair(tokenA, tokenB) == address(0)) {
+        //     IGEXFactory(factory).createPair(tokenA, tokenB);
+        // }
+        (uint reserveA, uint reserveB) = GEXLibrary.getReserves(
+            factory,
+            tokenA,
+            tokenB
+        );
+        if (reserveA == 0 && reserveB == 0) {
+            (amountA, amountB) = (amountADesired, amountBDesired);
+        } else {
+            uint amountBOptimal = GEXLibrary.quote(
+                amountADesired,
+                reserveA,
+                reserveB
+            );
+            if (amountBOptimal <= amountBDesired) {
+                require(
+                    amountBOptimal >= amountBMin,
+                    "GEXRouter: INSUFFICIENT_B_AMOUNT"
+                );
+                (amountA, amountB) = (amountADesired, amountBOptimal);
+            } else {
+                uint amountAOptimal = GEXLibrary.quote(
+                    amountBDesired,
+                    reserveB,
+                    reserveA
+                );
+                assert(amountAOptimal <= amountADesired);
+                require(
+                    amountAOptimal >= amountAMin,
+                    "GEXRouter: INSUFFICIENT_A_AMOUNT"
+                );
+                (amountA, amountB) = (amountAOptimal, amountBDesired);
+            }
+        }
+    }
+
+    function getReverse(address tokenA, address tokenB) external view returns (uint reserveA, uint reserveB) {
+        (reserveA, reserveB) = GEXLibrary.getReserves(
+            factory,
+            tokenA,
+            tokenB
+        );
+
+    }
+
+    function getQuote(uint amountADesired, uint reserveA, uint reserveB) external pure returns (uint amountBOptimal) {
+                    amountBOptimal = GEXLibrary.quote(
+                amountADesired,
+                reserveA,
+                reserveB
+            );
     }
 
     function addLiquidity(
@@ -144,10 +195,62 @@ contract GEXRouter01 is IGEXRouter01 {
         IWGLCH(WGLCH).deposit{value: amountETH}();
         assert(IWGLCH(WGLCH).transfer(pair, amountETH));
         liquidity = IGEXPair(pair).mint(to);
+        if (msg.value > amountETH)
+            TransferHelper.safeTransferETH(msg.sender, msg.value - amountETH); // refund dust eth, if any
+    }
+    function addLiquidityETH2(
+        address token,
+        uint amountTokenDesired,
+        uint amountTokenMin,
+        uint amountETHMin,
+        address to,
+        uint deadline
+    )
+        external
+        payable
+        // view
+        ensure(deadline)
+        returns (uint amountToken, uint amountETH, uint liquidity)
+    {
+        (amountToken, amountETH) = _addLiquidity2(
+            token,
+            WGLCH,
+            amountTokenDesired,
+            msg.value,
+            amountTokenMin,
+            amountETHMin
+        );
 
-        if (msg.value.sub(amountETH) >= minGLCHAmount) {
-            TransferHelper.safeTransferETH(msg.sender, msg.value - amountETH); // refund dust eth, if any > minGLCHAmount
-        }
+        // address pair = GEXLibrary.pairFor(factory, token, WGLCH);
+        // TransferHelper.safeTransferFrom(token, msg.sender, pair, amountToken);
+        // IWGLCH(WGLCH).deposit{value: amountETH}();
+        // assert(IWGLCH(WGLCH).transfer(pair, amountETH));
+        // liquidity = IGEXPair(pair).mint(to);
+        // if (msg.value > amountETH)
+        //     TransferHelper.safeTransferETH(msg.sender, msg.value - amountETH); // refund dust eth, if any
+    }
+    function testDust(
+    )
+        external
+        payable
+    {
+        // (amountToken, amountETH) = _addLiquidity2(
+        //     token,
+        //     WGLCH,
+        //     amountTokenDesired,
+        //     msg.value,
+        //     amountTokenMin,
+        //     amountETHMin
+        // );
+
+        // address pair = GEXLibrary.pairFor(factory, token, WGLCH);
+        // TransferHelper.safeTransferFrom(token, msg.sender, pair, amountToken);
+        uint amountETH = msg.value - 1;
+        IWGLCH(WGLCH).deposit{value: amountETH}();
+        assert(IWGLCH(WGLCH).transfer(msg.sender, amountETH));
+        TransferHelper.safeTransferETH(msg.sender, msg.value - amountETH); // refund dust eth, if any
+        // liquidity = IGEXPair(pair).mint(to);
+        // if (msg.value > amountETH)
     }
 
     // **** REMOVE LIQUIDITY ****
@@ -418,7 +521,6 @@ contract GEXRouter01 is IGEXRouter01 {
     {
         require(path[0] == WGLCH, "GEXRouter: INVALID_PATH");
         amounts = GEXLibrary.getAmountsIn(factory, amountOut, path);
-        require(amounts[0] >= minGLCHAmount, "GEXRouter: MIN_GLCH_AMOUNT");
         require(amounts[0] <= msg.value, "GEXRouter: EXCESSIVE_INPUT_AMOUNT");
         IWGLCH(WGLCH).deposit{value: amounts[0]}();
         assert(
@@ -428,9 +530,8 @@ contract GEXRouter01 is IGEXRouter01 {
             )
         );
         _swap(amounts, path, to);
-        if (msg.value.sub(amounts[0]) >= minGLCHAmount) {
-            TransferHelper.safeTransferETH(msg.sender, msg.value - amounts[0]); // refund dust eth, if any > minGLCHAmount
-        }
+        if (msg.value > amounts[0])
+            TransferHelper.safeTransferETH(msg.sender, msg.value - amounts[0]); // refund dust eth, if any
     }
 
     function quote(

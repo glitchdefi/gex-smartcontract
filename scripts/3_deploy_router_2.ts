@@ -22,33 +22,15 @@ export const main = async () => {
     `Deployer ${owner.address} has balance: ${utils.formatEther(ownerBalance)}`
   );
 
-  console.log();
-  console.log("wGLCH deploying...");
-  const wGLCH = await deploy("WGLCH", { from: owner });
-  console.log("wGLCH deployed at:", wGLCH.address);
 
   console.log();
   console.log("GEXRouter01 deploying...");
-  const minGLCHAmount = utils.parseEther("0.1");
-  const router = await deploy("GEXRouter01", {
+  const router = await deploy("GEXRouter02", {
     from: owner,
-    args: [outputs[NETWORK].GEXFactory.address, wGLCH.address, minGLCHAmount],
+    args: ["0xcBE8B5fb7145767c3D2519f2463DAFa2d8f48d5E", "0x5BB81754B95D73f918896CBFCF54B1050d6F7607"],
   });
-  console.log("GEXRouter01 deployed at:", router.address);
+  console.log("GEXRouter02 deployed at:", router.address);
 
-  console.log();
-  console.log("Multicall deploying...");
-  const multicall = await deploy("Multicall", { from: owner });
-  console.log("Multicall deployed at:", multicall.address);
-
-  outputs[NETWORK].Multicall.address = multicall.address;
-  outputs[NETWORK].GEXRouter01.address = router.address;
-  outputs[NETWORK].GEXRouter01.vars.WGLCH = wGLCH.address;
-  outputs[NETWORK].GEXRouter01.vars.factory =
-    outputs[NETWORK].GEXFactory.address;
-
-  writeOutput(NETWORK, outputs[NETWORK]);
-  console.log("DONE");
 };
 
 main().catch((error) => {
